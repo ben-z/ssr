@@ -48,14 +48,14 @@ void PrintOptionHelp() {
 }
 
 QString DefaultSettingsFile() {
-	return GetApplicationUserDir() + "/settings.conf";
+	return GetApplicationUserDir(XDG_CONFIG) + "/settings.conf";
 }
 
 QString DefaultLogFile() {
 
 	// delete old log files
 	QDateTime now = QDateTime::currentDateTime();
-	QDir dir(GetApplicationUserDir("logs"));
+	QDir dir(GetApplicationUserDir(XDG_DATA, "logs"));
 	dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 	dir.setNameFilters(QStringList("log-*.txt"));
 	for(QFileInfo fileinfo : dir.entryInfoList()) {
@@ -220,12 +220,25 @@ QString GetApplicationSystemDir(const QString& subdir) {
 	return dir;
 }
 
-QString GetApplicationUserDir(const QString& subdir) {
-	QString dir = QDir::homePath() + "/.ssr";
+QString GetXDGDir(const ApplicationUserDirType type) {
+	const char* env_name = type == XDG_DATA ? "XDG_DATA_HOME" : "XDG_CONFIG_HOME";
+	const char* default_dir = type == XDG_DATA ? "/.local/share" : "/.config";
+
+	QByteArray env = qgetenv(env_name);
+	if (env.count() == 0 || !QDir(QString(env)).exists()) {
+		return QDir::homePath() + default_dir;
+	} else {
+		return QString(env);
+	}
+
+}
+
+QString GetApplicationUserDir(const ApplicationUserDirType type, const QString& subdir) {
+	QString dir = GetXDGDir(type) + "/ssr";
 	if(!subdir.isEmpty())
 		dir += "/" + subdir;
 	if(!QDir::root().mkpath(dir)) {
-		Logger::LogError("[GetApplicationUserDir] " + Logger::tr("Error: Can't create .ssr directory!"));
+		Logger::LogError("[GetApplicationUserDir] " + Logger::tr("Error: Can't create '%1' directory!").arg(dir));
 		throw 0;
 	}
 	return dir;

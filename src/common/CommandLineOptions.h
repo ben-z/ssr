@@ -64,6 +64,8 @@ public:
 
 };
 
+enum ApplicationUserDirType { XDG_DATA, XDG_CONFIG };
+
 QString GetVersionInfo();
 QString GetApplicationSystemDir(const QString& subdir = QString());
-QString GetApplicationUserDir(const QString& subdir = QString());
+QString GetApplicationUserDir(const ApplicationUserDirType type, const QString& subdir = QString());
